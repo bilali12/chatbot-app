@@ -1,8 +1,0 @@
-tag,patterns,responses
-salutation,"Salut, Bonjour, Comment ça va, Y a-t-il quelqu'un ?, Hello, Bonjour à tous","Salut :-), Bonjour, merci de votre visite, Salut, que puis-je faire pour vous ?, Bonjour, comment puis-je vous aider ?"
-au revoir,"Au revoir, À plus tard, Bonne journée","À bientôt, merci de votre visite, Passez une bonne journée, Au revoir ! Revenez bientôt."
-merci,"Merci, Merci beaucoup, C'est utile, Merci bien !","Heureux de vous aider !, À tout moment !, Avec plaisir"
-articles,"Quels articles avez-vous ?, Quels types d'articles avez-vous ?, Que vendez-vous ?","Nous vendons du café et du thé, Nous avons du café et du thé"
-paiements,"Acceptez-vous les cartes de crédit ?, Acceptez-vous Mastercard ?, Puis-je payer avec Paypal ?, Acceptez-vous uniquement l'argent liquide ?","Nous acceptons VISA, Mastercard et Paypal, Nous acceptons la plupart des principales cartes de crédit, et Paypal"
-livraison,"Combien de temps prend la livraison ?, Combien de temps prend l'expédition ?, Quand vais-je recevoir ma livraison ?","La livraison prend 2 à 4 jours, L'expédition prend 2 à 4 jours"
-humour,"Raconte-moi une blague !, Dis-moi quelque chose de drôle !, Connaissez-vous une blague ?","Pourquoi le hipster s'est-il brûlé la bouche ? Il a bu le café avant qu'il ne soit cool., Qu'a dit le buffle quand son fils est parti à l'université ? Bison."

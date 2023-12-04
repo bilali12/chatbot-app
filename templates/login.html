@@ -4,15 +4,8 @@
 
 {% block content %}
 <div class="column is-4 is-offset-4">
-    <h3 class="title text-light">Connexion</h3>
     <div class="box">
-        {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <div class="notification is-danger">
-                {{ messages[0] }}
-            </div>
-        {% endif %}
-        {% endwith %}
+        <h3 class="title">Connexion</h3>
         <form method="POST" action="/login">
             
             <div class="field">
@@ -31,12 +24,29 @@
                     <button class="button is-block is-info is-large is-fullwidth">Se connecter</button>
                 </div>
                 <div>
-                    <a href="#">S'inscrire</a>
+                    <a href="http://127.0.0.1:5000/register" class="text-light">S'inscrire</a>
                 </div>
             </div>
             
            
         </form>
+        </div>
+        {% with message = get_flashed_messages(with_categories=true) | last %}
+            {% if message %}
+                <div id="flash-message" class="notification {% if message[0] %} is-danger {% endif %}">
+                    {{ message[1] }}
+                </div>
+
+                <script>
+                    setTimeout(function() {
+                        var flashMessage = document.getElementById('flash-message');
+                        if (flashMessage) {
+                            flashMessage.style.display = 'none';
+                        }
+                    }, 3000);  // 3000 milliseconds = 3 seconds
+                </script>
+            {% endif %}
+        {% endwith %}
     </div>
 </div>
 {% endblock %}
