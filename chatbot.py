@@ -1,21 +1,28 @@
 from  flask import  Flask, render_template, request, jsonify, session, redirect, session, flash
+import random
 import json
-import datetime
 import os
-import pickle
-import tempfile
-import asyncio
-import json
+import torch
+
+from model import NeuralNet
+from nltk_utils import bag_of_words, tokenize
+# import json
+# import datetime
+# import os
+# import pickle
+# import tempfile
+# import asyncio
+# import json
 import pyrebase #pip install  pyrebase4
 # from langchain.llms import OpenAi
 # pip install  python-dotenv
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.chat_models import ChatOpenAI
-from langchain.chains import ConversationalRetrievalChain
-from langchain.document_loaders.csv_loader import CSVLoader
-from langchain.vectorstores import FAISS
-from langchain.prompts.prompt import PromptTemplate
-from dotenv import load_dotenv
+# from langchain.embeddings.openai import OpenAIEmbeddings
+# from langchain.chat_models import ChatOpenAI
+# from langchain.chains import ConversationalRetrievalChain
+# from langchain.document_loaders.csv_loader import CSVLoader
+# from langchain.vectorstores import FAISS
+# from langchain.prompts.prompt import PromptTemplate
+# from dotenv import load_dotenv
 
 app = Flask(__name__)
 config = {
@@ -34,6 +41,25 @@ auth = firebase.auth()
 
 # info = auth.get_account_info(user["idToken"])
 app.secret_key = 'secret'
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+with open('intents.json', 'r') as json_data:
+    intents = json.load(json_data)
+
+FILE = "data.pth"
+data = torch.load(FILE)
+
+input_size = data["input_size"]
+hidden_size = data["hidden_size"]
+output_size = data["output_size"]
+all_words = data['all_words']
+tags = data['tags']
+model_state = data["model_state"]
+
+model = NeuralNet(input_size, hidden_size, output_size).to(device)
+model.load_state_dict(model_state)
+model.eval()
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -123,6 +149,8 @@ def feedback():
     if request.method == "GET":
         if 'user'in session:
             return render_template('feedback.html')
+    if request.method == "POST":
+        pass
     
 
 @app.route('/chatbot')
@@ -134,126 +162,33 @@ def chatbot_interface():
 
 @app.route('/get', methods=['GET', 'POST'])
 def chat():
-    
+
     msg = request.form['msg']
     input = msg
-    # print(get_chat_response(msg))
-    return "ça va?"
-
-load_dotenv()
-if os.getenv("OPENAI_API_KEY") is None  or os.getenv("OPENAI_API_KEY") == "":
-    print("OPENAI_API_KEY doesn't set...")
-    exit(1)
-else:
-    # try:
-    #     # def store_embedding():
-    #     #     with tempfile.NamedTemporaryFile(mode="wb", delete=False) as tmp_file:
-    #     #         with open('data.csv', 'rb') as f:
-    #     #             contents = f.read()
-    #     #             tmp_file.write(contents)
-    #     #             tmp_file_path = tmp_file.name
-    #     #         loader = CSVLoader(file_path=tmp_file_path, encoding="utf-8")
-    #     #         data = loader.load()
-
-    #     #         embeddings = OpenAIEmbeddings()
-                        
-    #     #         vectors = FAISS.from_documents(data, embeddings)
-    #     #         os.remove(tmp_file_path)
-
-    #     #         with open('data' + ".pkl", "wb") as f:
-    #     #             pickle.dump(vectors, f)
-        
-                
-    # except:
-    #     pass
-    pass
-
-def store_embedding():
-    try:
-        with tempfile.NamedTemporaryFile(mode="wb", delete=False) as tmp_file:
-            with open('mayo_clinic.csv', 'rb') as f:
-                contents = f.read()
-                tmp_file.write(contents)
-                tmp_file_path = tmp_file.name
-            
-            loader = CSVLoader(file_path=tmp_file_path, encoding="utf-8")
-            data = loader.load()
-            # print(data)
-            embeddings = OpenAIEmbeddings()
-            vectors = FAISS.from_documents(data, embeddings)
-            print(vectors)
-            os.remove(tmp_file_path)
-
-            with open('amazon_customer.pkl', 'wb') as f:
-                pickle.dump(vectors, f)
-
-    except FileNotFoundError:
-        print("Error: CSV file not found.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
-# def get_chat_response(msg):
-#     """
-#         fonction qui utilise l'api de openAi
-#         pour fournir une reponse a la requette
-#         de l'utilisateur
-#     """
-#     load_dotenv()
-#     if os.getenv("OPENAI_API_KEY") is None  or os.getenv("OPENAI_API_KEY") == "":
-#         print("OPENAI_API_KEY doesn't set...")
-#         exit(1)
-#     else:
-#         result = ""
-#         try:
-#             async def storeDocEmbeds():
-#                 print('yes')
-#                 with tempfile.NamedTemporaryFile(mode="wb", delete=False) as tmp_file:
-#                     with open('data.csv', 'rb') as f:
-#                         contents = f.read()
-#                         tmp_file.write(contents)
-#                         tmp_file_path = tmp_file.name
-
-#                 loader = CSVLoader(file_path=tmp_file_path, encoding="utf-8")
-#                 data = loader.load()
-
-#                 embeddings = OpenAIEmbeddings()
-                        
-#                 vectors = FAISS.from_documents(data, embeddings)
-#                 os.remove(tmp_file_path)
-
-#                 with open('data' + ".pkl", "wb") as f:
-#                     pickle.dump(vectors, f)
-
-
-#             async def get_embedding():
-#                 if not os.path.isfile('data' + ".pkl"):
-#                             # If not, store the vectors using the storeDocEmbeds function
-#                     await storeDocEmbeds()
-
-#                     print('No Docs found !!!')
-                        
-#                     with open('data' + ".pkl", "rb") as f:
-#                             #global vectors
-#                         vectors = pickle.load(f)
-                            
-#                     return vectors
-
-#             async def response():
-                
-#                 query = msg
-#                 result = chain({"question": query})
-                        
-#                         # Add the user's query and the chatbot's response to the chat history
-                        
-#                         # You can print the chat history for debugging :
-#                         #print("Log: ")
-#                         #print(st.session_state['history'])
-#             print(result)
-#             return jsonify(result["answer"])
-#         except:
-#             print('something is wrong!')
-
     
+    return get_chat_response(input)
+
+def get_chat_response(msg):
+    sentence = tokenize(msg)
+    X = bag_of_words(sentence, all_words)
+    X = X.reshape(1, X.shape[0])
+    X = torch.from_numpy(X).to(device)
+
+    output = model(X)
+    _, predicted = torch.max(output, dim=1)
+
+    tag = tags[predicted.item()]
+
+    probs = torch.softmax(output, dim=1)
+    prob = probs[0][predicted.item()]
+    print(prob.item())
+    if prob.item() > 0.75:
+        for intent in intents['intents']:
+            if tag == intent["tag"]:
+                return random.choice(intent['responses'])
+    
+    return "I do not understand..."
+
 
 if __name__ == '__main__':
     app.run(debug=True)
