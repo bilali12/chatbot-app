@@ -1,4 +1,5 @@
 from  flask import  Flask, render_template, request, jsonify, session, redirect, session, flash
+from flask_mail import Mail, Message
 import random
 import json
 import os
@@ -6,22 +7,8 @@ import torch
 
 from model import NeuralNet
 from nltk_utils import bag_of_words, tokenize
-# import json
-# import datetime
-# import os
-# import pickle
-# import tempfile
-# import asyncio
-# import json
 import pyrebase #pip install  pyrebase4
-# from langchain.llms import OpenAi
-# pip install  python-dotenv
-# from langchain.embeddings.openai import OpenAIEmbeddings
-# from langchain.chat_models import ChatOpenAI
-# from langchain.chains import ConversationalRetrievalChain
-# from langchain.document_loaders.csv_loader import CSVLoader
-# from langchain.vectorstores import FAISS
-# from langchain.prompts.prompt import PromptTemplate
+
 # from dotenv import load_dotenv
 
 app = Flask(__name__)
@@ -36,6 +23,17 @@ config = {
     'databaseURL': ''
 
 }
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+app.config['MAIL_USERNAME'] = 'bilalidiallo96@gmail.com'
+app.config['MAIL_PASSWORD'] = 'bjmq ylfd nspx njvi'
+app.config['MAIL_DEFAULT_SENDER'] = 'bilalidiallo96@gmail.com'
+
+mail = Mail(app)
+
 firebase = pyrebase.initialize_app(config)
 auth = firebase.auth()
 
@@ -64,15 +62,8 @@ model.eval()
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    # store_embedding()
-    # print(f"File path before pickle dump: {os.path.abspath('data.pkl')}")
-    # with open('data.pkl', 'wb') as f:
-    #     pickle.dump(vectors, f)
-    # print(f"File path after pickle dump: {os.path.abspath('data.pkl')}")
     return redirect('/login')
-    # with open(r"data.json", "r") as f:
-    #     train = json.load(f)
-    # return train
+    
 
 @app.route('/login', methods=['POST','GET'])
 def login():
@@ -94,7 +85,7 @@ def login():
             session['user'] = email
             return redirect("/chatbot")
         except Exception as e:
-            flash("Email ou mot de pass incorrect ! réessayez s'il vous plaît.", "error")
+            flash("Email or password is incorrect.", "error")
             return redirect("/login")
 
     
@@ -121,25 +112,25 @@ def register():
         confirm_password = request.form['pwd']
 
         if not lastName or not firstName or not email or not password or not confirm_password:
-            flash("Tous les champs sont obligatoires", "error")
+            flash("All the fields are required", "error")
             return redirect("/register")
 
         if password != confirm_password:
-            flash("le mot de pass et la confirmation doivent etre identiques", "error")
+            flash("password and confirm password cannot be different", "error")
             return redirect("/register")
 
         try:
             user = auth.create_user_with_email_and_password(email, password)
 
-            user_data = {
-                "firstName": firstName,
-                "lastName": lastName,
-            }
-            auth.update_user_info(user['idToken'], user_data)
-            return redirect('/login')
+            # user_data = {
+            #     "displayName": f"{firstName} {lastName}",
+            # }
+            # auth.update_account_info(user['idToken'], user_data)
+            return redirect("/login")
 
         except Exception as e:
-            flash(f"Erreur de creation de l'utilisateur", "error")
+            print(f"Error creating user: {e}")
+            flash(f"Error to create the user", "error")
             return redirect("/register")
         
 
@@ -150,7 +141,23 @@ def feedback():
         if 'user'in session:
             return render_template('feedback.html')
     if request.method == "POST":
-        pass
+        try:
+            feedback_text = request.form.get('msg')
+            
+            subject = 'Feedback from {}'.format(session['user'])  
+            recipient = 'bilalidiallo21@gmail.com'  
+            body = 'Feedback: {}'.format(feedback_text)
+            
+            msg = Message(subject=subject, recipients=[recipient], body=body)
+            mail.send(msg)
+            flash('Feedback sent successfully!', 'success')
+            
+            return redirect('/feedback')
+        except Exception as e:
+            # Log the exception or handle it appropriately
+            print(f"Error sending feedback email: {e}")
+            flash("Error sending feedback email", "error")
+            return redirect('/feedback')
     
 
 @app.route('/chatbot')
